@@ -1,14 +1,27 @@
 let viewer;
+// TODO - gather height&width from the image instead of hardcoded
+const mapWidth = 512;
+const mapHeight = 256;
+
 const cesiumDiv = document.getElementById("cesiumContainer");
+const mapImage = document.getElementById("staticMap");
 
 if (cesiumDiv) {
     DrawCesiumMap();
 
-    // Adjust initial position
+    // Adjust arrow per Cesium's initial position
     AdjustArrowOnCesiumCameraChange()
 } else {
-    console.error("Failed to find correct div for the Cesium Map");
+    console.error("Failed to find the Cesium Map element");
 }
+
+if (mapImage) {
+    // Subscribe to the event that is called when the user clicks on the map
+    mapImage.addEventListener("click", AdjustCesiumCameraThrough2dMap);
+} else {
+    console.error("Failed to find the static 2d map element");
+}
+
 
 function DrawCesiumMap() {
     // TODO - load access token from local configuration instead of hardcoded!
@@ -23,13 +36,33 @@ function DrawCesiumMap() {
     viewer.camera.changed.addEventListener(AdjustArrowOnCesiumCameraChange);
 }
 
+// Handle moving the Cesium 3d camera when selecting position in the 2d map
+// This assumes the X&Y coordinate parameters are in absolute position
+function AdjustCesiumCameraThrough2dMap(event) {
+    // Validate that map elements are available
+    if (mapImage && cesiumDiv) {
+        // Adjust the input coordinates from absolute to relative
+        const mapRect = mapImage.getBoundingClientRect();
+        const adjusted_x = event.clientX - mapRect.left;
+        const adjusted_y = event.clientY - mapRect.top;
+
+        // Adjust the relative coordinates to 
+        const {latitude, longitude} = Get3dCesiumMapCoordinatesFromPixelCoordinates(adjusted_x, adjusted_y);
+
+        // Fly the camera to the target latitude&longitude
+        viewer.camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(longitude, latitude, 10000000)
+        });
+    }
+    else {
+        console.error("Failed to locate the 2d or 3d Maps. Cannot adjust camera position correctly");
+    }
+}
+
+// Handle moving the arrow on the 2d map when changing the camera location through Cesium
 function AdjustArrowOnCesiumCameraChange() {
-    // TODO - gather height&width from the image instead of hardcoded
-    const mapWidth = 512;
-    const mapHeight = 256;
-    const {x, y} = Get2dMapCoordinatesFromCesiumMap(mapWidth, mapHeight);
+    const {x, y} = GetPixelCoordinatesFromCesiumMap();
     
-    const mapImage = document.getElementById("staticMap");
     const arrowImage = document.getElementById("arrowInMap");
     if (arrowImage && mapImage) {
 
@@ -50,19 +83,33 @@ function AdjustArrowOnCesiumCameraChange() {
     }
 }
 
-// Get the Cesium map's center coordinates then convert them to relevant position in the 2D map
-function Get2dMapCoordinatesFromCesiumMap(mapWidth, mapHeight) {
+// Get the Cesium map's center coordinates then convert them to relevant position in the 2d map
+function GetPixelCoordinatesFromCesiumMap() {
     const {latitude, longitude} = GetCesiumMapCoordinatesDegrees();
 
     // Convert latitude to y-coordinate (vertical position). 
-    // Conversion by normalizing to [-1, 1] range then adjust by map image's height
+    // Conversion by normalizing to [0, 1] range then adjust by map image's height
     let y = ((90 - latitude) / 180) * mapHeight;
 
     // Convert longitude to x-coordinate (horizontal position). 
-    // Conversion by normalizing to [-1, 1] range then adjust by map image's width
+    // Conversion by normalizing to [0, 1] range then adjust by map image's width
     let x = ((longitude + 180) / 360) * mapWidth;
 
     return {x, y}
+}
+
+// Get 3d World coordinates from the relative x/y pixel coordinates of the 2d map
+function Get3dCesiumMapCoordinatesFromPixelCoordinates(x, y) {
+
+    // Convert y-coordinate (vertical position) to latitude
+    // Conversion by adjusting by map image's height, then normalizing from [0, 1] to latitude degrees
+    let latitude = 90 - ((y / mapHeight) * 180);
+
+    // Convert x-coordinate (horizontal position) to longitude
+    // Conversion by adjusting by map image's width, then normalizing from [0, 1] range to longitude degrees
+    let longitude = (x / mapWidth) * 360 - 180;
+
+    return {latitude, longitude}
 }
 
 function GetCesiumMapCoordinatesDegrees() {    
