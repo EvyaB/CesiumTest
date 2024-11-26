@@ -2,16 +2,22 @@
 <html>
     <head>
         <title>Cesium Test</title>
-        <script src="app.js"></script>
+        <script type="module" src="app.js" defer></script>
+        <script src="https://cesium.com/downloads/cesiumjs/releases/1.108/Build/Cesium/Cesium.js"></script>
+        <link href="https://cesium.com/downloads/cesiumjs/releases/1.108/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+        
         <style>
-            .row {
-                display: flex;
+            .column {
+              float: left;
+              width: 50%;
+            }
+            /* Clear floats after the columns */
+            .row:after {
+              content: "";
+              display: table;
+              clear: both;
             }
 
-            .column {
-                flex: 50%;
-            }
-            
             .staticMap {
               position: relative;
               top: 0px;
@@ -23,19 +29,17 @@
             .arrowInMap {
               position: absolute;
               top: 150px;
-              left: 630px;
-              width: 10px;
-              height: 20px;
+              left: 1400px;
+              width: 15px;
+              height: 30px;
             }
         </style>
     </head>
     <body>
         <div class = "row">
             <!-- 3D Cesium Map -->
-            <div class = "column">
-                TEST CESIUM
-            </div>
-
+            <div class = "column" id="cesiumContainer"></div>
+            
             <!-- 2D Global Map -->
             <div class = "column" >
                 <img src ="Resources/globe.png" alt="2d Global Map" class="staticMap">
