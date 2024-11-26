@@ -1,4 +1,11 @@
-CesiumJS Exercise
+## Project overview:
+
+* **Map.html** contains the basic HTML & CSS code, which separates the page into two columns, one for Cesium's 3D map and another for the 2D static map image.
+
+* **app.js** implements the neccessary code to create Cesium's viewer, and dynamically adjust the arrow in the 2d map whenever Cesium camera moves (implemented through the function AdjustArrowOnCesiumCameraChange), and dynamically move Cesium camera whenever the user selects a position in the 2d map (implemented through the function AdjustCesiumCameraThrough2dMap).
+
+
+## CesiumJS Exercise
 1. In this test, you should develop an HTML page which contains a Cesium Viewer element and a
 simple globe map. See the attached image “preview.png”
 2. The tasks in this exercise are:
